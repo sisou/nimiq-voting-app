@@ -1,5 +1,4 @@
 import { unique } from 'typescript-array-utils';
-import { toBase32, ibanCheck, CCODE } from './core';
 import { VoteTypes, BaseVote, SingleChoiceVote, WeightedCoicesVote, MultipleChoiceVote, RankingVote, WeightedChoice,
     Config } from './types';
 
@@ -108,12 +107,14 @@ async function configHash(config: Config): Promise<ArrayBuffer> {
     return crypto.digest('SHA-256', data);
 }
 
-export async function voteAddress(config: Config, spaces = true): Promise<string> {
+export async function voteAddress(config: Config, withSpaces = true): Promise<string> {
+    const prefix = Nimiq.BufferUtils.fromAscii('V0TE');
     const hash = await configHash(config);
-    const base32 = toBase32(new Uint8Array(hash));
-    const digits = `V0TE${base32.slice(0, 28)}`;
-    // eslint-disable-next-line prefer-template
-    const check = ('00' + (98 - ibanCheck(digits + CCODE + '00'))).slice(-2);
-    const address = CCODE + check + digits;
-    return spaces ? address.replace(/.{4}/g, '$& ').trim() : address;
+
+    const addressBuffer = new Nimiq.SerialBuffer(Nimiq.Address.SERIALIZED_SIZE);
+    addressBuffer.write(prefix);
+    addressBuffer.write(hash);
+
+    const address = new Nimiq.Address(addressBuffer);
+    return address.toUserFriendlyAddress(withSpaces);
 }

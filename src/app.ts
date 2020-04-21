@@ -106,7 +106,6 @@ export default class App extends Vue {
                         weight: config.type === VoteTypes.weightedChoices ? 50 : 1,
                     });
                 }
-                this.votingAddress = await voteAddress(this.votingConfig, true);
             } else throw new Error('No choices for this voting found.');
         }
         this.pastVotings = this.configs
@@ -142,6 +141,10 @@ export default class App extends Vue {
                 // window.document.location.reload();
                 return;
             }
+        }
+
+        if (this.votingConfig) {
+            this.votingAddress = await voteAddress(this.votingConfig, true);
         }
 
         const { client } = this;
